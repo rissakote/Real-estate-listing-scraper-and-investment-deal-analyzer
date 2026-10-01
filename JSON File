@@ -1,0 +1,193 @@
+{
+  "name": "Real estate listing scraper and investment deal analyzer",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real_estate_listing",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        -224
+      ],
+      "id": "5055ba0d-dbd9-43a7-8a99-441dfca8e9fb",
+      "name": "Webhook1",
+      "webhookId": "421936a0-37bc-424a-a6e3-02df2690253c",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AQ.Ab8RN6K4dRYTxNOLxvv_Wmlc3FxPb_44jdrSshOKOr6eKNwj0g"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Hello, analyze Guntur real estate deal\"\n    }]\n  }]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -80,
+        -224
+      ],
+      "id": "19ff5dbc-c12c-4d91-8bf1-3de7e3a6afc7",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items\nfor (const item of $input.all()) {\n  const area = item.json.area || 'Guntur';\n  const rent = Number(item.json.rent) || 0;\n  const price = Number(item.json.price) || 1;\n  \n  const annualRent = rent * 12;\n  const capRate = (annualRent / price * 100).toFixed(2);\n  \n  let verdict = capRate >= 4 ? \"GOOD DEAL\" : \"BAD DEAL\";\n  \n  item.json.analysis = `Area: ${area}, Annual Rent: Rs ${annualRent}, Cap Rate: ${capRate}%. ${verdict} - Pattabhipuram lo 4% paine unte manchi deal.`;\n  item.json.cap_rate = capRate;\n  item.json.verdict = verdict;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -224
+      ],
+      "id": "08fad618-d9ec-4126-be74-b853f36d967f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "669ae823-01f3-4faf-9cd3-7bfb49a9782b",
+              "leftValue": "={{ 1 }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "2bea0c54-5cd1-4b33-b889-73128e8cc87a",
+              "leftValue": "=0",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -224
+      ],
+      "id": "6102166a-fd85-4efe-8ae3-801b812d000c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "rissakote@gmail.com",
+        "subject": "=New Property Alert - {{$json.body.area}}",
+        "message": "=Hi,  New Property Alert for Guntur:  Area: {{$json.body.area}} Price: {{$json.body.price}} Rent: {{$json.body.rent}} Property Value: {{$json.body.property_value}} Monthly Expenses: {{$json.body.monthly_expenses}}  Regards, Real Estate Investment Analyzer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        -320
+      ],
+      "id": "08d6dc05-3f97-4fb7-a3a8-f05e07d8881a",
+      "name": "Send a message",
+      "webhookId": "f6fad90a-6cdf-4620-9153-c49f1d398a3a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "RBt7NhMkTuswfoZr",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f2c7fa85-5bff-4750-b133-b12cb66e64ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4bd4edae2cbcf43816db44b9a980b654154ff9b6710a389a29f0ed1dd0c46770"
+  },
+  "nodeGroups": [],
+  "id": "VIMYzrYW9h1Jtzwh",
+  "tags": []
+}
